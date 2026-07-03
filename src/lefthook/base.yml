@@ -1,0 +1,38 @@
+# Shared lefthook base for asma-app-* micro-frontends.
+# Consume from the app's lefthook.yml:
+#
+#   extends:
+#     - node_modules/asma-core-toolchain/src/lefthook/base.yml
+#
+# Apps whose checks don't pass yet can disable a whole hook locally with e.g.
+#   pre-push:
+#     skip: true
+
+pre-push:
+  parallel: true
+  jobs:
+    - name: knip report
+      run: pnpm knip
+
+    - name: typescript check
+      run: pnpm run ts:check
+
+    - name: lint files
+      run: pnpm lint
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: lint files with fix
+      run: pnpm eslint {staged_files} --fix
+      glob: "*.{js,jsx,ts,tsx}"
+      stage_fixed: true
+
+    - name: format files
+      run: pnpm format {staged_files}
+      stage_fixed: true
+
+commit-msg:
+  commands:
+    "lint commit message":
+      run: pnpm commitlint --edit {1}
