@@ -1,6 +1,7 @@
 import eslint from '@eslint/js'
 import pluginQuery from '@tanstack/eslint-plugin-query'
 import { defineConfig, globalIgnores } from 'eslint/config'
+import betterTailwind from 'eslint-plugin-better-tailwindcss'
 import deMorgan from 'eslint-plugin-de-morgan'
 import reactPlugin from 'eslint-plugin-react'
 import reactHooksPlugin from 'eslint-plugin-react-hooks'
@@ -10,13 +11,17 @@ import tseslint from 'typescript-eslint'
 
 /**
  * Shared eslint flat-config base for asma-app-* micro-frontends.
- * App-specific blocks (tailwind flavor, extra rules) are appended in the app's eslint.config.js:
+ * App-specific blocks (extra rules) are appended in the app's eslint.config.js:
  *
- *   export default defineConfig(asmaAppEslintConfig(), ...appSpecificBlocks)
+ *   export default defineConfig(asmaAppEslintConfig({ tailwind: true }), ...appSpecificBlocks)
  *
- * @param {{ ignores?: string[] }} [options] extra globalIgnores patterns on top of the shared list
+ * @param {{ ignores?: string[]; tailwind?: boolean }} [options]
+ *   - ignores: extra globalIgnores patterns on top of the shared list
+ *   - tailwind: include the fleet-standard `eslint-plugin-better-tailwindcss` layer
+ *     (Tailwind v4-compatible; the convergence target for all apps). Off by default so
+ *     apps still on the legacy `eslint-plugin-tailwindcss` are unaffected until they migrate.
  */
-export function asmaAppEslintConfig({ ignores = [] } = {}) {
+export function asmaAppEslintConfig({ ignores = [], tailwind = false } = {}) {
     return defineConfig(
         eslint.configs.recommended,
         tseslint.configs.recommendedTypeChecked,
@@ -120,5 +125,19 @@ export function asmaAppEslintConfig({ ignores = [] } = {}) {
         regexpPlugin.configs['flat/recommended'],
         ...pluginQuery.configs['flat/recommended'],
         deMorgan.configs.recommended,
+        ...(tailwind
+            ? [
+                  {
+                      files: ['**/*.{js,jsx,ts,tsx}'],
+                      plugins: { 'better-tailwindcss': betterTailwind },
+                      rules: {
+                          ...betterTailwind.configs['recommended-warn'].rules,
+                          ...betterTailwind.configs['recommended-error'].rules,
+                          // line-wrapping is noisy; enable per-app later
+                          'better-tailwindcss/enforce-consistent-line-wrapping': ['off', { printWidth: 120 }],
+                      },
+                  },
+              ]
+            : []),
     )
 }
