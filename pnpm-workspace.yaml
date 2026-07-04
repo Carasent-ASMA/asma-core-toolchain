@@ -2,4 +2,4 @@ packages:
   - .
 
 minimumReleaseAgeExclude:
-  - asma-mfw-esmloader@0.15.0
+  - asma-mfw-esmloader
