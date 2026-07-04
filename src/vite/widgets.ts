@@ -3,7 +3,7 @@ import { type WidgetBuildOptions, widgetBuild, widgetCodeSplitting } from 'asma-
 import { defineConfig, mergeConfig, type PluginOption, type UserConfig } from 'vite'
 import svgr from 'vite-plugin-svgr'
 
-import { isKernelExternalBuild, KERNEL_EXTERNAL_SPECIFIERS, kernelImportmapManifestPlugin } from './kernelExternal.js'
+import { isKernelExternalBuild, kernelEsmExternalRequirePlugin, kernelImportmapManifestPlugin } from './kernelExternal.js'
 
 /**
  * Shared native-ESM widget build for asma-app-* micro-frontends (dual-loader migration).
@@ -51,7 +51,9 @@ export function defineAsmaWidgetsConfig(options: AsmaWidgetsViteOptions = {}) {
             emptyOutDir: false,
             rollupOptions: {
                 input,
-                ...(kernelExternal ? { external: [...KERNEL_EXTERNAL_SPECIFIERS] } : {}),
+                // Kernel externalization is NOT done here via `external` — kernelEsmExternalRequirePlugin
+                // (plugins below) owns it, so CJS deps' `require('react')` gets rewritten to imports
+                // instead of rolldown's throwing browser `__require` shim (see the plugin's doc).
                 output: {
                     chunkFileNames: 'chunks/[name]-[hash].js',
                     // Reusable vendor chunks (react kernel / per-package / vendor tail) — the entry stays
@@ -72,7 +74,7 @@ export function defineAsmaWidgetsConfig(options: AsmaWidgetsViteOptions = {}) {
             react(),
             svgr(),
             plugin,
-            ...(kernelExternal ? [kernelImportmapManifestPlugin()] : []),
+            ...(kernelExternal ? [kernelImportmapManifestPlugin(), kernelEsmExternalRequirePlugin()] : []),
         ],
         // `vite preview --config vite.config.widgets.ts` serves dist cross-origin for the shell dev loop.
         preview: { cors: true },

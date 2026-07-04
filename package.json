@@ -1,6 +1,6 @@
 {
     "name": "asma-core-toolchain",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "description": "Shared toolchain for asma-app-* micro-frontends: vite config factory, tsconfig base, eslint flat-config base, lefthook base, cspell dictionary. Replaces copy-drift from template-vitemf-react.",
     "type": "module",
     "license": "MIT",

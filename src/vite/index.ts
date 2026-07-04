@@ -3,7 +3,12 @@ import { qiankun } from 'asma-qiankun-plugin-vite'
 import { type ConfigEnv, defineConfig, loadEnv, type PluginOption, type UserConfig } from 'vite'
 import svgr from 'vite-plugin-svgr'
 
-export { isKernelExternalBuild, KERNEL_EXTERNAL_SPECIFIERS, kernelImportmapManifestPlugin } from './kernelExternal.js'
+export {
+    isKernelExternalBuild,
+    KERNEL_EXTERNAL_SPECIFIERS,
+    kernelEsmExternalRequirePlugin,
+    kernelImportmapManifestPlugin,
+} from './kernelExternal.js'
 
 /**
  * Resolves the vite `base` and dev-server port from env, honoring the multiversion

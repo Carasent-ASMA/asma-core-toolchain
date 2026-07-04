@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 
-import type { Plugin } from 'vite'
+import { esmExternalRequirePlugin, type Plugin } from 'vite'
 
 /**
  * Kernel externalization for the native-ESM migration (frontend plan Phase 2/3, app side).
@@ -23,10 +23,11 @@ import type { Plugin } from 'vite'
  * the flag is the multiversion kill-switch: the manifest ships per app@version, so only users
  * PINNED to an externalized version ever get a map.
  *
- * Wiring in an app's vite.config.ts:
+ * Wiring in an app's vite.config.ts (requires rolldown-vite, i.e. vite >= 8):
  *   const kernelExternal = isKernelExternalBuild()
- *   // config: ...(kernelExternal ? { build: { rollupOptions: { external: [...KERNEL_EXTERNAL_SPECIFIERS] } } } : {})
- *   // plugins: ...(kernelExternal ? [kernelImportmapManifestPlugin()] : [])
+ *   // plugins: ...(kernelExternal ? [kernelImportmapManifestPlugin(), kernelEsmExternalRequirePlugin()] : [])
+ *   // NOTE: do NOT also put KERNEL_EXTERNAL_SPECIFIERS in rolldownOptions.external —
+ *   // kernelEsmExternalRequirePlugin() owns the externalization (see its doc for why).
  *
  * @see _docs/frontend/plans/2026-07-01-14-00-plan-native-esm-widget-migration.md:401 — B4 manifest-delegation model
  * @see _docs/frontend/plans/2026-07-01-14-00-plan-native-esm-widget-migration.md:130 — §4 target architecture (React-cohort rule)
@@ -78,6 +79,30 @@ export const KERNEL_EXTERNAL_SPECIFIERS: readonly string[] = KERNEL_LIBS.map((li
 /** Kernel externalization is opt-in per BUILD (pilot versions set it; normal releases stay bundled). */
 export function isKernelExternalBuild(): boolean {
     return process.env['KERNEL_EXTERNAL'] === 'true'
+}
+
+/**
+ * THE externalization mechanism for kernel-external builds — rolldown's builtin
+ * `esm-external-require` plugin configured with the kernel specifier set. It does two things:
+ * marks the specifiers external (imports stay bare for the import map), AND rewrites
+ * `require('react')` inside bundled CJS deps (react-side-effect via react-helmet, UMD builds
+ * requiring mobx/mobx-state-tree, …) into real imports of the external module.
+ *
+ * Why a plugin instead of `rolldownOptions.external`: rolldown deliberately does NOT convert CJS
+ * `require()` of a top-level-external module into an import — it emits a runtime `__require` shim
+ * that THROWS in the browser (rolldown.rs/in-depth/bundling-cjs#require-external-modules; rollup's
+ * commonjs plugin used to convert these, so this class of breakage is new with rolldown-vite —
+ * it took down shell 0.78.1's login on dev). The rewrite is safe for the kernel set because every
+ * kernel lib is published as browser ESM with named exports + default interop (build.ts codegens
+ * the barrels). The specifiers must NOT additionally appear in top-level `external`: an external
+ * match wins before the plugin's resolve hook, the plugin never sees the module, and the throwing
+ * shim comes back (the plugin warns "Found N duplicate external" when this happens).
+ *
+ * Requires rolldown-vite (vite >= 8) — vite re-exports the builtin; kernel-external builds are
+ * rolldown-only anyway (codeSplitting etc.).
+ */
+export function kernelEsmExternalRequirePlugin(): Plugin {
+    return esmExternalRequirePlugin({ external: [...KERNEL_EXTERNAL_SPECIFIERS] }) as unknown as Plugin
 }
 
 /** The consuming app's package.json (vite configs run with cwd = the app root). */
