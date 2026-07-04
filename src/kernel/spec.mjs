@@ -122,6 +122,7 @@ export const KERNEL_SPEC = {
             reason: '347 subpath imports (asma-helpers/*) — subpath-blocked; also the legacy name of the kernel member asma-core-helpers (Phase-0 rename)',
         },
         { match: 'antd', reason: 'split across majors 4/5/6 — no dedup until convergence' },
+        { match: 'buffer', reason: 'Node polyfill, 13 KB gz — under the small-lib threshold (an extra request costs more than dedup saves); polyfill/aliases left untouched (decided 2026-07-04)' },
         { match: 'tailwind-merge', reason: '~17 KB gz + split majors 2/3 — under the small-lib threshold (an extra request costs more than dedup saves)' },
         { match: 'framer-motion', reason: '3 apps on majors 10/11 — eligible only after version alignment (plan TASK-024)' },
         { match: 'echarts-for-react', reason: 'thin react wrapper — stays bundled per app over the kernel-served echarts' },
