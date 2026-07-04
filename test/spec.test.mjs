@@ -31,6 +31,8 @@ const EXPECTED_EXTERNAL = [
     'asma-ui-notistack',
     'asma-ui-table',
     'asma-ui-richeditor',
+    // fleet-expansion Wave B1: asma-ui-datetime (date-fns moved to peerDeps)
+    'asma-ui-datetime',
     'mobx',
     'mobx-state-tree',
     'date-fns',
@@ -50,6 +52,7 @@ const EXPECTED_PINNED = [
     'asma-ui-notistack',
     'asma-ui-table',
     'asma-ui-richeditor',
+    'asma-ui-datetime',
     'mobx',
     'mobx-state-tree',
     'date-fns',

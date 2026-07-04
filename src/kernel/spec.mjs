@@ -61,6 +61,9 @@ export const KERNEL_SPEC = {
         { specifier: 'asma-ui-notistack', reactAdjacent: true },
         { specifier: 'asma-ui-table', reactAdjacent: true },
         { specifier: 'asma-ui-richeditor', reactAdjacent: true },
+        // fleet-expansion Wave B1 — date-fns moved to peerDeps (was bundled); all 7 consumers
+        // already declare date-fns within the peer range ^2.30.0 || ^3.0.0 || ^4.0.0.
+        { specifier: 'asma-ui-datetime', reactAdjacent: true },
         // react-free (one shared kernel URL across cohorts)
         { specifier: 'mobx' },
         { specifier: 'mobx-state-tree' },
