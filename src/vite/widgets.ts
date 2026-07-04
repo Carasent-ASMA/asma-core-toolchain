@@ -47,6 +47,16 @@ export function defineAsmaWidgetsConfig(options: AsmaWidgetsViteOptions = {}) {
     const kernelExternal = isKernelExternalBuild()
 
     const base: UserConfig = {
+        // Native-ESM widgets are loaded from a path not known at build time — `/cdn/<app>/<ver>/`,
+        // a `pr<N>` preview, or a `http://localhost:<port>/` dev override. A RELATIVE base makes vite
+        // resolve the dynamic-import preload graph (`__vite__mapDeps` / `__vitePreload`) against each
+        // chunk's own `import.meta.url` — the same way the emitted static `../chunks/…` imports already
+        // resolve. Without it vite falls back to the default absolute base `/`, so every code-split
+        // preload is fetched from the ORIGIN ROOT (`/chunks/…`), the static server answers its SPA
+        // catch-all `index.html` (`text/html`), and the browser rejects it: "Expected a
+        // JavaScript-or-Wasm module script … MIME type text/html". (The qiankun face keeps its absolute
+        // `getBasePathAndPort()` base from the main config — this only affects the widgets face.)
+        base: './',
         build: {
             emptyOutDir: false,
             rollupOptions: {
