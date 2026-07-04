@@ -64,6 +64,9 @@ export const KERNEL_SPEC = {
         // fleet-expansion Wave B1 — date-fns moved to peerDeps (was bundled); all 7 consumers
         // already declare date-fns within the peer range ^2.30.0 || ^3.0.0 || ^4.0.0.
         { specifier: 'asma-ui-datetime', reactAdjacent: true },
+        // fleet-expansion Wave C2 — all-icons barrel 126 KB raw / 32 KB gzip (under the 120 KB
+        // gzip gate); 11 consumers, widest drift in fleet (0.0.1–0.4.0). Converge to 0.4.x.
+        { specifier: 'asma-ui-icons', reactAdjacent: true },
         // react-free (one shared kernel URL across cohorts)
         { specifier: 'mobx' },
         { specifier: 'mobx-state-tree' },
