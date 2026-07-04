@@ -27,6 +27,10 @@ const EXPECTED_EXTERNAL = [
     'mobx-react-lite',
     '@tanstack/react-query',
     'asma-helpers-react',
+    // fleet-expansion Wave A: asma-ui-* component layer above asma-ui-core (react-adjacent cohort)
+    'asma-ui-notistack',
+    'asma-ui-table',
+    'asma-ui-richeditor',
     'mobx',
     'mobx-state-tree',
     'date-fns',
@@ -34,6 +38,8 @@ const EXPECTED_EXTERNAL = [
     'asma-event-bus',
     'history',
     'axios',
+    // fleet-expansion Wave C1: echarts (react-free, biggest single lib payload)
+    'echarts',
 ]
 const EXPECTED_PINNED = [
     'asma-ui-core',
@@ -41,6 +47,9 @@ const EXPECTED_PINNED = [
     'mobx-react-lite',
     '@tanstack/react-query',
     'asma-helpers-react',
+    'asma-ui-notistack',
+    'asma-ui-table',
+    'asma-ui-richeditor',
     'mobx',
     'mobx-state-tree',
     'date-fns',
@@ -48,6 +57,7 @@ const EXPECTED_PINNED = [
     'asma-event-bus',
     'history',
     'axios',
+    'echarts',
 ]
 
 const deriveExternal = () => KERNEL_SPEC.libs.map((l) => l.specifier)

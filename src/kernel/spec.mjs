@@ -24,9 +24,15 @@
  */
 
 /**
- * Fleet-evidence-based (2026-07-03 scan of 16 `asma-app-*` package.json): each lib here is used by
- * ≥10 apps, ships browser-ready ESM, and is big enough that one shared cached fetch beats per-app
- * rebundling. Every entry must exist in `/cdn/libs/` (published by `asma-mfw-kernel`).
+ * Fleet-evidence-based (2026-07-04 scan of 17 `asma-app-*`/`adopus-app-*` package.json): every lib
+ * here ships browser-ready ESM, is imported ROOT-ONLY across the fleet, and earns its slot on
+ * reach × payload — one shared cached fetch beats per-app rebundling. The ≥10-app bar is only the
+ * audit's promotion-SCOUT threshold (bin/asma-kernel-audit.mjs), not a membership rule: a big lib
+ * with fewer consumers can still win (fleet-expansion Wave A/C added `asma-ui-table`@9 apps,
+ * `asma-ui-richeditor`@6, `echarts`@4 — payload-driven). Every entry must exist in `/cdn/libs/`
+ * (published by `asma-mfw-kernel`).
+ *
+ * @see _docs/frontend/plans/2026-07-04-16-30-plan-kernel-lib-fleet-expansion.md — Wave A/B/C rationale
  *
  *   - `versionOf`     — a subpath that ships under another lib's version dir (the react-set:
  *                       react-dom / jsx-runtime / react-dom-client all live under `react@<ver>/`).
@@ -49,6 +55,12 @@ export const KERNEL_SPEC = {
         { specifier: 'mobx-react-lite', reactAdjacent: true },
         { specifier: '@tanstack/react-query', reactAdjacent: true },
         { specifier: 'asma-helpers-react', reactAdjacent: true },
+        // fleet-expansion Wave A — the asma-ui-* component layer above asma-ui-core. Each bundles its
+        // own tree-shaken MUI/emotion subset and keeps asma-ui-core/react/mobx* bare (double-MUI cost
+        // class, same as asma-ui-core; see plan CON-002). Imported root-only across the fleet.
+        { specifier: 'asma-ui-notistack', reactAdjacent: true },
+        { specifier: 'asma-ui-table', reactAdjacent: true },
+        { specifier: 'asma-ui-richeditor', reactAdjacent: true },
         // react-free (one shared kernel URL across cohorts)
         { specifier: 'mobx' },
         { specifier: 'mobx-state-tree' },
@@ -57,6 +69,10 @@ export const KERNEL_SPEC = {
         { specifier: 'asma-event-bus' },
         { specifier: 'history' },
         { specifier: 'axios' },
+        // fleet-expansion Wave C1 — biggest single-lib payload (~330 KB gz). react-free: apps import
+        // only echarts-for-react (stays bundled); its internal bare `import 'echarts'` is what gets
+        // externalized here. All 4 consumers declare echarts directly (REQ-004).
+        { specifier: 'echarts' },
     ],
 
     /**
@@ -88,5 +104,24 @@ export const KERNEL_SPEC = {
         { match: '@mui/', reason: 'rides INSIDE the asma-ui-core kernel bundle — unbundling explodes into ~153 URLs' },
         { match: '@emotion/', reason: 'rides inside asma-ui-core with MUI' },
         { match: '@urql/', reason: 'multi-entry family with per-app version drift — fleet top-up phase' },
+        // fleet-expansion Phase 6 (examined 2026-07-04, deliberately kept OUT — reasons recorded so
+        // the next fleet scan does not re-litigate; see plan §2 Phase 6 / §3 Alternatives):
+        {
+            match: 'socket.io-client',
+            reason: 'not a dependency of ANY app — pre-bundled inside @openreplay/tracker-assist dist; not externalizable without upstream packaging changes',
+        },
+        {
+            match: 'engine.io-client',
+            reason: 'same as socket.io-client — ships inside @openreplay/tracker-assist, no app declares it',
+        },
+        {
+            match: 'asma-helpers',
+            reason: '347 subpath imports (asma-helpers/*) — subpath-blocked; also the legacy name of the kernel member asma-core-helpers (Phase-0 rename)',
+        },
+        { match: 'antd', reason: 'split across majors 4/5/6 — no dedup until convergence' },
+        { match: 'tailwind-merge', reason: '~17 KB gz + split majors 2/3 — under the small-lib threshold (an extra request costs more than dedup saves)' },
+        { match: 'framer-motion', reason: '3 apps on majors 10/11 — eligible only after version alignment (plan TASK-024)' },
+        { match: 'echarts-for-react', reason: 'thin react wrapper — stays bundled per app over the kernel-served echarts' },
+        { match: '@iconify/react', reason: '8 apps but split majors 3/4/6 — revisit after convergence' },
     ],
 }
