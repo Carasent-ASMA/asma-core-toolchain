@@ -1,6 +1,11 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 
+// The ONE hand-edited kernel-lib declaration (REQ-001). Everything below is DERIVED from it — this
+// file no longer OWNS the list. Self-referencing package import (resolves to src/kernel/spec.mjs
+// via the "./kernel/spec" export) so the same specifier works here, in the audit tool, and in
+// asma-infrastructure's plain-Node tools.
+import { KERNEL_SPEC } from 'asma-core-toolchain/kernel/spec'
 import { esmExternalRequirePlugin, type Plugin } from 'vite'
 
 /**
@@ -34,47 +39,22 @@ import { esmExternalRequirePlugin, type Plugin } from 'vite'
  */
 
 /**
- * The kernel lib set — every entry must exist in `/cdn/libs/` (published by `asma-mfw-kernel`
- * in asma-infrastructure, whose package.json baseline pins mirror this list; fleet apps top up
- * their versions via the reusable-kernel-publish workflow). Fleet-evidence-based (2026-07-03
- * scan of 16 `asma-app-*` package.json): each lib here is used by ≥10 apps, ships browser-ready
- * ESM, and is big enough that one shared cached fetch beats per-app rebundling.
- *
- * Deliberately NOT in the kernel (and why):
- *  - `clsx`, `uuid` — a few hundred bytes; an extra request costs more than dedup saves.
- *  - `lodash-es` — apps import subpaths (`lodash-es/get`); serving it needs trailing-slash
- *    package-dir publishing (unbundled), a fleet-phase kernel capability.
- *  - `@mui/material` + `@emotion/*` — ride INSIDE the kernel `asma-ui-core` bundle (unbundling
- *    explodes into ~153 URLs — parent-plan G2). An app's direct MUI imports stay bundled:
- *    a small, known double-MUI cost for the pilot.
- *  - `@urql/*`, `gql.tada` — multi-entry family with per-app version drift; fleet top-up phase.
- *  - `asma-qiankun-react-loader` — retired by parent-plan Phase 7.
- *  - `asma-genql-directory` — schema-generated, version-coupled per app; poor dedup.
- *  - `asma-types` — types-only, no runtime imports to externalize.
+ * Every specifier apps externalize — the whole spec list, in declaration order. DERIVED from the
+ * spec (KERNEL_SPEC.libs), never re-listed here.
  */
-const KERNEL_LIBS = [
-    // react-set root: react-dom / jsx-runtime / react-dom-client ship under the same react@<ver>/
-    { specifier: 'react' },
-    { specifier: 'react/jsx-runtime', versionOf: 'react' },
-    { specifier: 'react-dom', versionOf: 'react' },
-    { specifier: 'react-dom/client', versionOf: 'react' },
-    // react-adjacent (kernel mounts them per React cohort)
-    { specifier: 'asma-ui-core' },
-    { specifier: 'react-router-dom' },
-    { specifier: 'mobx-react-lite' },
-    { specifier: '@tanstack/react-query' },
-    { specifier: 'asma-helpers-react' },
-    // react-free (one shared kernel URL across cohorts)
-    { specifier: 'mobx' },
-    { specifier: 'mobx-state-tree' },
-    { specifier: 'date-fns' },
-    { specifier: 'asma-core-helpers' },
-    { specifier: 'asma-event-bus' },
-    { specifier: 'history' },
-    { specifier: 'axios' },
-] as const
+export const KERNEL_EXTERNAL_SPECIFIERS: readonly string[] = KERNEL_SPEC.libs.map((lib) => lib.specifier)
 
-export const KERNEL_EXTERNAL_SPECIFIERS: readonly string[] = KERNEL_LIBS.map((lib) => lib.specifier)
+/**
+ * The root specifiers the kernel PUBLISHER pins in its `package.json` `dependencies` — the spec
+ * set minus the react-set. `react` + everything with `versionOf: 'react'` (react-dom, the two
+ * subpaths) are served per-cohort from `vendor-react<N>/` dirs and are deliberately NOT pinned in
+ * the kernel package (its node_modules react is npm peer-satisfaction plumbing only). This is the
+ * exact set `asma-mfw-kernel/sync-deps.mjs` GENERATES into the publisher's package.json (and CI's
+ * `--check` asserts is regeneration-clean) — so the two can never drift by construction.
+ */
+export const KERNEL_PINNED_ROOT_SPECIFIERS: readonly string[] = KERNEL_SPEC.libs
+    .filter((lib) => lib.versionOf === undefined && lib.specifier !== 'react')
+    .map((lib) => lib.specifier)
 
 /** Kernel externalization is opt-in per BUILD (pilot versions set it; normal releases stay bundled). */
 export function isKernelExternalBuild(): boolean {
@@ -138,8 +118,8 @@ export function kernelImportmapManifestPlugin(): Plugin {
         generateBundle() {
             const declared = appPackageJson(appRoot).dependencies ?? {}
             const needs: Record<string, string> = {}
-            for (const lib of KERNEL_LIBS) {
-                if (!('versionOf' in lib) && lib.specifier in declared) {
+            for (const lib of KERNEL_SPEC.libs) {
+                if (lib.versionOf === undefined && lib.specifier in declared) {
                     needs[lib.specifier] = resolvedVersion(appRoot, lib.specifier)
                 }
             }

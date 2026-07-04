@@ -1,6 +1,6 @@
 {
     "name": "asma-core-toolchain",
-    "version": "0.4.1",
+    "version": "0.6.0",
     "description": "Shared toolchain for asma-app-* micro-frontends: vite config factory, tsconfig base, eslint flat-config base, lefthook base, cspell dictionary. Replaces copy-drift from template-vitemf-react.",
     "type": "module",
     "license": "MIT",
@@ -17,6 +17,10 @@
             "types": "./lib/vite/widgets.d.ts",
             "default": "./lib/vite/widgets.js"
         },
+        "./kernel/spec": {
+            "types": "./src/kernel/spec.d.ts",
+            "default": "./src/kernel/spec.mjs"
+        },
         "./eslint": "./src/eslint/index.js",
         "./tsconfig/app.json": "./src/tsconfig/app.json",
         "./lefthook/base.yml": "./src/lefthook/base.yml",
@@ -29,7 +33,8 @@
     ],
     "scripts": {
         "build": "tsc",
-        "check": "tsc --noEmit"
+        "check": "tsc --noEmit && node --test",
+        "test": "node --test"
     },
     "dependencies": {
         "@eslint/js": "^10.0.1",
@@ -64,6 +69,7 @@
         "vite": "^8.0.13"
     },
     "bin": {
-        "asma-app": "./bin/asma-app.mjs"
+        "asma-app": "./bin/asma-app.mjs",
+        "asma-kernel-audit": "./bin/asma-kernel-audit.mjs"
     }
 }

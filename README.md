@@ -4,15 +4,21 @@ Shared toolchain for `asma-app-*` micro-frontends. One versioned npm package ins
 per-app copies of the same vite/tsconfig/eslint/lefthook/cspell files (the old
 `template-vitemf-react` copy-and-drift flow).
 
-Lives as a plain directory in the `asma-modules` superproject (no own repo/submodule — it
-rarely changes), but is delivered like every other shared lib: published to npm, consumed as
-a semver devDependency. No symlinks, no superproject checkout in CI — `pnpm install` is the
-whole delivery mechanism.
+Lives as its own repo, checked out as a submodule of the `asma-modules` superproject, and is
+delivered like every other shared lib: published to npm, consumed as a semver devDependency —
+`pnpm install` is the whole delivery mechanism.
+
+## Documentation
+
+Canonical docs live in the superproject at `asma-modules/_docs/asma-core-toolchain/`
+([index](_docs/index.md)) — the local `_docs` symlink points there, so it resolves only inside a
+superproject checkout (standalone clones see a dangling link; that's the repo-wide convention).
+Start with the [kernel audit runbook](_docs/operations/2026-07-04-13-55-runbook-kernel-audit.md).
 
 ## What's inside
 
 | Export | Consumed by | Contents |
-|---|---|---|
+| --- | --- | --- |
 | `asma-core-toolchain/vite` | `vite.config.ts` | `defineAsmaAppConfig` factory (base/port/proxy/server + qiankun/react/svgr trio), `getBasePathAndPort`, `createAsmaBuildOptions` / `createManualChunks` |
 | `asma-core-toolchain/eslint` | `eslint.config.js` | `asmaAppEslintConfig()` flat-config base (js/ts-typechecked/react/hooks/regexp/de-morgan/tanstack-query + shared ignores). All plugins are dependencies of this package — apps don't declare them |
 | `asma-core-toolchain/tsconfig/app.json` | `tsconfig.json` `extends` | shared `compilerOptions` baseline (Bundler resolution, strict, ESNext) |
@@ -67,6 +73,25 @@ extends:
 Shell (`asma-app-shell`) consumes the same factory and passes its shell-only plugins/options —
 shell-specific files stay in the shell repo.
 
+## Kernel spec (single source of truth)
+
+The kernel-externalization contract — which shared libs `asma-app-*` builds externalize — is
+declared ONCE, as data, in [`src/kernel/spec.mjs`](src/kernel/spec.mjs) (`KERNEL_SPEC`), exported as
+`asma-core-toolchain/kernel/spec`. Everything else is **computed** from it:
+
+- `KERNEL_EXTERNAL_SPECIFIERS` / `KERNEL_PINNED_ROOT_SPECIFIERS` in
+  [`src/vite/kernelExternal.ts`](src/vite/kernelExternal.ts) derive from the spec.
+- `asma-infrastructure/asma-mfw-kernel` **generates** its `package.json` dependency names from the
+  spec (`sync-deps.mjs`) and derives `gather.mjs`'s react-adjacent / react-free sets from it —
+  consumed via the published `asma-core-toolchain` devDependency. Its CI `sync-deps.mjs --check` is
+  the one hard cross-repo guard, so spec↔publisher drift is impossible by construction (no more
+  `mirror` audit).
+
+`asma-kernel-audit candidates` (bin) is now purely advisory: it scans the fleet for libs that have
+crossed the promotion bar but aren't in the kernel yet, annotating deliberate exclusions from
+`KERNEL_SPEC.excluded`. Promotion stays a deliberate PR to the spec. See the
+[kernel audit runbook](_docs/operations/2026-07-04-13-55-runbook-kernel-audit.md).
+
 ## Versioning & release
 
 Manual, because changes are rare: bump `version` in `package.json` (SemVer) in the same
@@ -77,9 +102,8 @@ pnpm install && pnpm build && npm publish --access public
 ```
 
 Apps pick up changes by bumping the devDependency — normal dependency review, no surprise
-config changes on unrelated CI runs. If churn ever grows, add a path-filtered publish
-workflow to `asma-modules/.github/workflows` (GitHub doesn't run workflows from
-subdirectories, so the one that used to live here was dead config and was removed).
+config changes on unrelated CI runs. (This package is now its own repo/submodule, so its
+`.github/workflows/` do run — `publish.yml` publishes on push to `master`.)
 
 ## Local development
 
