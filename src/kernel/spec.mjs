@@ -55,6 +55,11 @@ export const KERNEL_SPEC = {
         { specifier: 'mobx-react-lite', reactAdjacent: true },
         { specifier: '@tanstack/react-query', reactAdjacent: true },
         { specifier: 'asma-helpers-react', reactAdjacent: true },
+        // asma-core-react is the successor to the (now npm-deprecated) asma-helpers-react — same
+        // react-hook helpers under a new name. BOTH are kernel members during the fleet migration so
+        // neither the migrated nor the un-migrated apps break; asma-helpers-react moves to
+        // legacyAliases (and out of libs) once every app has converged. asma-app-shell migrated first.
+        { specifier: 'asma-core-react', reactAdjacent: true },
         // fleet-expansion Wave A — the asma-ui-* component layer above asma-ui-core. Each bundles its
         // own tree-shaken MUI/emotion subset and keeps asma-ui-core/react/mobx* bare (double-MUI cost
         // class, same as asma-ui-core; see plan CON-002). Imported root-only across the fleet.
