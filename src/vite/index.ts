@@ -10,6 +10,20 @@ export {
     kernelImportmapManifestPlugin,
 } from './kernelExternal.js'
 
+export { chunkGuardPlugin } from './chunkGuard.js'
+export type { ChunkGuardExclude, ChunkGuardOptions } from './chunkGuard.js'
+
+export { treeShakeAuditPlugin } from './treeShakeAudit.js'
+export type {
+    Analysis,
+    BlobAnalysis,
+    BlobSymbolWeight,
+    BundleMeta,
+    PkgFinding,
+    SymbolWeight,
+    TreeShakeAuditOptions,
+} from './treeShakeAudit.js'
+
 /**
  * Resolves the vite `base` and dev-server port from env, honoring the multiversion
  * deployment strategy (BASE_PATH_MULTIV_STRATEGY + VERSION segment in the base URL).
