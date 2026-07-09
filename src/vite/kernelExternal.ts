@@ -24,7 +24,7 @@ import { esmExternalRequirePlugin, type Plugin } from 'vite'
  *
  * GATED OFF BY DEFAULT (`KERNEL_EXTERNAL=true` to enable): an externalized build only works for
  * users whose first hit carries the import map (seeded kernel + composer live), so the flag keeps
- * every normal release byte-compatible with today while pilot builds opt in. Containment beyond
+ * every normal release byte-compatible with today while externalized builds opt in. Containment beyond
  * the flag is the multiversion kill-switch: the manifest ships per app@version, so only users
  * PINNED to an externalized version ever get a map.
  *
@@ -56,7 +56,7 @@ export const KERNEL_PINNED_ROOT_SPECIFIERS: readonly string[] = KERNEL_SPEC.libs
     .filter((lib) => lib.versionOf === undefined && lib.specifier !== 'react')
     .map((lib) => lib.specifier)
 
-/** Kernel externalization is opt-in per BUILD (pilot versions set it; normal releases stay bundled). */
+/** Kernel externalization is opt-in per BUILD (set KERNEL_EXTERNAL=true; normal releases stay bundled). */
 export function isKernelExternalBuild(): boolean {
     return process.env['KERNEL_EXTERNAL'] === 'true'
 }
