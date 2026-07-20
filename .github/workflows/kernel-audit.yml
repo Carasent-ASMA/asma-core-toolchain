@@ -42,9 +42,12 @@ jobs:
           } > report.md
 
       # Upsert a single evergreen issue: edit its body in place if it exists, else create it.
+      # Uses the built-in job token (not the cross-org PAT): the tracking issue lives in THIS
+      # repo, and `issues: write` above is all `gh issue` needs. Keeping this off secrets.GH_TOKEN
+      # means the dashboard issue stays current even when the PAT secret is unset.
       - name: Upsert tracking issue
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           num=$(gh issue list --repo "$GITHUB_REPOSITORY" --state all --json number,title \
                   --jq ".[] | select(.title==\"$ISSUE_TITLE\") | .number" | head -1)
