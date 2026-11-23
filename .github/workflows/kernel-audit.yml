@@ -20,7 +20,7 @@ env:
 
 jobs:
   audit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
       # The audit tool imports the spec straight from src (plain .mjs — no build/install needed).
